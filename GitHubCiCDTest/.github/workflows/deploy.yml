@@ -1,0 +1,35 @@
+﻿name: Deploy .NET 9 App to Local IIS
+
+on:
+  push:
+    branches:
+      - main  # Triggers the deployment every time you push to the main branch
+
+jobs:
+  deploy:
+    runs-on: self-hosted  # This forces the job to run on your local 'iis-runner' machine
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+
+    - name: Publish Application
+      run: dotnet publish ./YourProjectName --configuration Release --output ./publish
+
+    - name: Stop IIS Site (Prevents locked file errors)
+      run: |
+        powershell -Command "Stop-IISSite -Name 'Default Web Site' -Confirm:$false"
+      continue-on-error: true  # Keeps going if the site is already stopped
+
+    - name: Copy Files to IIS wwwroot
+      run: |
+        powershell -Command "Copy-Item -Path './publish/*' -Destination 'C:\inetpub\wwwroot' -Recurse -Force"
+
+    - name: Start IIS Site
+      run: |
+        powershell -Command "Start-IISSite -Name 'Default Web Site'"
