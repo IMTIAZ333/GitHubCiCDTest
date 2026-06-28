@@ -7,7 +7,7 @@ on:
 
 jobs:
   deploy:
-    runs-on: self-hosted  # This forces the job to run on your local 'iis-runner' machine
+    runs-on: self-hosted  # Runs directly on your Windows Server runner
 
     steps:
     - name: Checkout Code
@@ -16,20 +16,24 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '9.0.x'
+        dotnet-version: '9.0.313'
 
     - name: Publish Application
-      run: dotnet publish ./YourProjectName --configuration Release --output ./publish
+      # Compiles the app into a temporary local folder named 'publish'
+      run: dotnet publish --configuration Release --output .\publish
 
-    - name: Stop IIS Site (Prevents locked file errors)
+    - name: Stop IIS App Pool (Prevents locked file errors)
+      # 🟢 Stops your exact Application Pool: githubPool
       run: |
-        powershell -Command "Stop-IISSite -Name 'Default Web Site' -Confirm:$false"
-      continue-on-error: true  # Keeps going if the site is already stopped
+        powershell -Command "Stop-IISAppPool -Name 'githubPool' -Confirm:$false"
+      continue-on-error: true
 
-    - name: Copy Files to IIS wwwroot
+    - name: Copy Files to IIS Website Folder
+      # 🟢 Copies the compiled code straight into your E:\ drive directory
       run: |
-        powershell -Command "Copy-Item -Path './publish/*' -Destination 'C:\inetpub\wwwroot' -Recurse -Force"
+        powershell -Command "Copy-Item -Path '.\publish\*' -Destination 'E:\Sites\MyWebSite' -Recurse -Force"
 
-    - name: Start IIS Site
+    - name: Start IIS App Pool
+      # 🟢 Restarts your exact Application Pool: githubPool
       run: |
-        powershell -Command "Start-IISSite -Name 'Default Web Site'"
+        powershell -Command "Start-IISAppPool -Name 'githubPool'"
