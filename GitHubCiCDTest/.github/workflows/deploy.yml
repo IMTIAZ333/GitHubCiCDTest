@@ -1,0 +1,39 @@
+﻿name: Deploy .NET 9 App to Local IIS
+
+on:
+  push:
+    branches:
+      - imtiazpc
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.313'
+
+    - name: Publish Application
+      run: dotnet publish --configuration Release --output .\publish
+
+    - name: Stop IIS App Pool
+      shell: powershell
+      run: |
+        Stop-WebAppPool -Name "githubPool"
+      continue-on-error: true
+
+    - name: Copy Files to IIS Website Folder
+      shell: powershell
+      run: |
+        Copy-Item -Path ".\publish\*" -Destination "E:\Sites\MyWebSite" -Recurse -Force
+
+    - name: Start IIS App Pool
+      shell: powershell
+      run: |
+        Start-WebAppPool -Name "githubPool"
+                
