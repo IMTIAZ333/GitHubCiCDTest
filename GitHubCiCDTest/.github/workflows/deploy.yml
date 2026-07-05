@@ -36,3 +36,4 @@ jobs:
       shell: powershell
       run: |
         Start-WebAppPool -Name "githubPool"
+                
