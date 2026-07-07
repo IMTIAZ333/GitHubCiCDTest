@@ -3,34 +3,45 @@ name: Deploy .NET 9 App to Local IIS
 on:
   push:
     branches:
-      - imtiazpc  # Triggers the deployment on your active branch
+      - main
+  workflow_dispatch:
 
 jobs:
   deploy:
-    runs-on: self-hosted  # Runs directly on your Windows Server runner
+    runs-on: self-hosted
 
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: '9.0.313'
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.313'
 
-    - name: Publish Application
-      # Points directly to your inner application project folder
-      run: dotnet publish .\GitHubCiCDTest --configuration Release --output .\publish
+      - name: Restore Packages
+        run: dotnet restore .\GitHubCiCDTest\GitHubCiCDTest.csproj
 
-    - name: Stop IIS App Pool (Prevents locked file errors)
-      run: |
-        powershell -Command "Stop-IISAppPool -Name 'githubPool' -Confirm:$false"
-      continue-on-error: true
+      - name: Build Application
+        run: dotnet build .\GitHubCiCDTest\GitHubCiCDTest.csproj --configuration Release --no-restore
 
-    - name: Copy Files to IIS Website Folder
-      run: |
-        powershell -Command "Copy-Item -Path '.\publish\*' -Destination 'E:\Sites\MyWebSite' -Recurse -Force"
+      - name: Publish Application
+        run: dotnet publish .\GitHubCiCDTest\GitHubCiCDTest.csproj --configuration Release --no-build --output .\publish
 
-    - name: Start IIS App Pool
-      run: |
-        powershell -Command "Start-IISAppPool -Name 'githubPool'"
+      - name: Stop IIS App Pool
+        shell: powershell
+        continue-on-error: true
+        run: |
+          Import-Module WebAdministration
+          Stop-WebAppPool -Name "githubPool"
+
+      - name: Copy Files to IIS Website Folder
+        shell: powershell
+        run: |
+          Copy-Item ".\publish\*" "E:\Sites\MyWebSite" -Recurse -Force
+
+      - name: Start IIS App Pool
+        shell: powershell
+        run: |
+          Import-Module WebAdministration
+          Start-WebAppPool -Name "githubPool"
