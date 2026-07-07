@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - imtiazpc
   workflow_dispatch:
 
 jobs:
@@ -11,37 +12,36 @@ jobs:
     runs-on: self-hosted
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+    - name: Checkout Code
+      uses: actions/checkout@v4
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '9.0.313'
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.313'
 
-      - name: Restore Packages
-        run: dotnet restore .\GitHubCiCDTest\GitHubCiCDTest.csproj
+    - name: Restore Packages
+      run: dotnet restore .\GitHubCiCDTest\GitHubCiCDTest.csproj
 
-      - name: Build Application
-        run: dotnet build .\GitHubCiCDTest\GitHubCiCDTest.csproj --configuration Release --no-restore
+    - name: Build Application
+      run: dotnet build .\GitHubCiCDTest\GitHubCiCDTest.csproj --configuration Release --no-restore
 
-      - name: Publish Application
-        run: dotnet publish .\GitHubCiCDTest\GitHubCiCDTest.csproj --configuration Release --no-build --output .\publish
+    - name: Publish Application
+      run: dotnet publish .\GitHubCiCDTest\GitHubCiCDTest.csproj --configuration Release --no-build --output .\publish
 
-      - name: Stop IIS App Pool
-        shell: powershell
-        continue-on-error: true
-        run: |
-          Import-Module WebAdministration
-          Stop-WebAppPool -Name "githubPool"
+    - name: Stop IIS App Pool
+      shell: powershell
+      continue-on-error: true
+      run: |
+        Import-Module WebAdministration
+        Stop-WebAppPool -Name "githubPool"
 
-      - name: Copy Files to IIS Website Folder
-        shell: powershell
-        run: |
-          Copy-Item ".\publish\*" "E:\Sites\MyWebSite" -Recurse -Force
+      shell: powershell
+      run: |
+        Copy-Item ".\publish\*" "E:\Sites\MyWebSite" -Recurse -Force
 
-      - name: Start IIS App Pool
-        shell: powershell
-        run: |
-          Import-Module WebAdministration
-          Start-WebAppPool -Name "githubPool"
+    - name: Start IIS App Pool
+      shell: powershell
+      run: |
+        Import-Module WebAdministration
+        Start-WebAppPool -Name "githubPool"
