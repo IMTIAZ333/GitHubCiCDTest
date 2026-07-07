@@ -1,0 +1,36 @@
+name: Deploy .NET 9 App to Local IIS
+
+on:
+  push:
+    branches:
+      - imtiazpc  # Triggers the deployment on your active branch
+
+jobs:
+  deploy:
+    runs-on: self-hosted  # Runs directly on your Windows Server runner
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.313'
+
+    - name: Publish Application
+      # Points directly to your inner application project folder
+      run: dotnet publish .\GitHubCiCDTest --configuration Release --output .\publish
+
+    - name: Stop IIS App Pool (Prevents locked file errors)
+      run: |
+        powershell -Command "Stop-IISAppPool -Name 'githubPool' -Confirm:$false"
+      continue-on-error: true
+
+    - name: Copy Files to IIS Website Folder
+      run: |
+        powershell -Command "Copy-Item -Path '.\publish\*' -Destination 'E:\Sites\MyWebSite' -Recurse -Force"
+
+    - name: Start IIS App Pool
+      run: |
+        powershell -Command "Start-IISAppPool -Name 'githubPool'"
