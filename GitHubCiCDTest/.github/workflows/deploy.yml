@@ -3,6 +3,7 @@
 on:
   push:
     branches:
+      - main
       - imtiazpc
 
 jobs:
@@ -18,22 +19,29 @@ jobs:
       with:
         dotnet-version: '9.0.313'
 
+    - name: Restore Packages
+      run: dotnet restore .\GitHubCiCDTest\GitHubCiCDTest.csproj
+
+    - name: Build Application
+      run: dotnet build .\GitHubCiCDTest\GitHubCiCDTest.csproj --configuration Release --no-restore
+
     - name: Publish Application
-      run: dotnet publish --configuration Release --output .\publish
+      run: dotnet publish .\GitHubCiCDTest\GitHubCiCDTest.csproj --configuration Release --no-build --output .\publish
 
     - name: Stop IIS App Pool
       shell: powershell
-      run: |
-        Stop-WebAppPool -Name "githubPool"
       continue-on-error: true
+      run: |
+        Import-Module WebAdministration
+        Stop-WebAppPool -Name "githubPool"
 
-    - name: Copy Files to IIS Website Folder
+    - name: Copy Files
       shell: powershell
       run: |
-        Copy-Item -Path ".\publish\*" -Destination "E:\Sites\MyWebSite" -Recurse -Force
+        Copy-Item ".\publish\*" "E:\Sites\MyWebSite" -Recurse -Force
 
     - name: Start IIS App Pool
       shell: powershell
       run: |
+        Import-Module WebAdministration
         Start-WebAppPool -Name "githubPool"
-                
