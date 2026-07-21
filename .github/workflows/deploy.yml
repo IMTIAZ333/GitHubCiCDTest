@@ -14,15 +14,15 @@ jobs:
 
       - name: Restore Packages
         shell: pwsh
-        run: dotnet restore .\GitHubCiCDTest\GitHubCiCDTest.csproj
+        run: dotnet restore .\CiCD_Pipline_To_IIS_window_server\CiCD_Pipline_To_IIS_window_server.csproj
 
       - name: Build Application
         shell: pwsh
-        run: dotnet build .\GitHubCiCDTest\GitHubCiCDTest.csproj --configuration Release --no-restore
+        run: dotnet build .\CiCD_Pipline_To_IIS_window_server\CiCD_Pipline_To_IIS_window_server.csproj --configuration Release --no-restore
 
       - name: Publish Application
         shell: pwsh
-        run: dotnet publish .\GitHubCiCDTest\GitHubCiCDTest.csproj --configuration Release --no-build --output .\publish
+        run: dotnet publish .\CiCD_Pipline_To_IIS_window_server\CiCD_Pipline_To_IIS_window_server.csproj --configuration Release --no-build --output .\publish
 
       - name: Stop IIS App Pool
         shell: powershell
