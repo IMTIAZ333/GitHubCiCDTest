@@ -1,5 +1,4 @@
-﻿name: Deploy .NET 9 App to Local IIS
-
+name: Deploy .NET 9 App to Local IIS
 on:
   push:
     branches:
@@ -9,28 +8,31 @@ on:
 jobs:
   deploy:
     runs-on: self-hosted
-
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-  
-
       - name: Restore Packages
+        shell: pwsh
         run: dotnet restore .\GitHubCiCDTest\GitHubCiCDTest.csproj
 
       - name: Build Application
+        shell: pwsh
         run: dotnet build .\GitHubCiCDTest\GitHubCiCDTest.csproj --configuration Release --no-restore
 
       - name: Publish Application
+        shell: pwsh
         run: dotnet publish .\GitHubCiCDTest\GitHubCiCDTest.csproj --configuration Release --no-build --output .\publish
 
       - name: Stop IIS App Pool
         shell: powershell
-        continue-on-error: true
         run: |
           Import-Module WebAdministration
           Stop-WebAppPool -Name "githubPool"
+          do {
+            Start-Sleep -Seconds 1
+            $state = (Get-WebAppPoolState -Name "githubPool").Value
+          } while ($state -ne "Stopped")
 
       - name: Copy Files to IIS Website Folder
         shell: powershell
@@ -42,4 +44,3 @@ jobs:
         run: |
           Import-Module WebAdministration
           Start-WebAppPool -Name "githubPool"
-   
